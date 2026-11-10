@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pixel Breakout</title>
+<style>
+body { background: #000; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; image-rendering: pixelated; }
+canvas { border: 4px solid #333; image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<canvas id="game" width="480" height="320"></canvas>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+const paddleW = 80, paddleH = 10;
+let paddleX = 200;
+let ballX = 240, ballY = 250, ballVX = 3, ballVY = -3;
+const bricks = [];
+const rows = 5, cols = 8;
+for (let r = 0; r < rows; r++) {
+  for (let c = 0; c < cols; c++) {
+    bricks.push({x: c*60 + 10, y: r*20 + 30, w: 50, h: 15, alive: true, color: `hsl(${r*50},80%,50%)`});
+  }
+}
+let score = 0;
+
+function loop() {
+  ballX += ballVX; ballY += ballVY;
+  if (ballX < 0 || ballX > 470) ballVX *= -1;
+  if (ballY < 0) ballVY *= -1;
+  if (ballY > 310) { alert('Game Over! Score: ' + score); location.reload(); return; }
+  if (ballY > 280 && ballX > paddleX && ballX < paddleX + paddleW) {
+    ballVY = -Math.abs(ballVY);
+    ballVX = (ballX - (paddleX + paddleW/2)) / 10;
+  }
+  bricks.forEach(b => {
+    if (b.alive && ballX > b.x && ballX < b.x + b.w && ballY > b.y && ballY < b.y + b.h) {
+      b.alive = false;
+      ballVY *= -1;
+      score += 10;
+    }
+  });
+
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,480,320);
+  ctx.fillStyle = '#0f0';
+  ctx.fillRect(paddleX, 300, paddleW, paddleH);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(ballX-4, ballY-4, 8, 8);
+  bricks.forEach(b => {
+    if (b.alive) {
+      ctx.fillStyle = b.color;
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+    }
+  });
+  ctx.fillStyle = '#fff';
+  ctx.font = '16px monospace';
+  ctx.fillText('Score: ' + score, 10, 20);
+  if (bricks.every(b => !b.alive)) {
+    alert('You Win! Score: ' + score);
+    location.reload();
+  }
+  requestAnimationFrame(loop);
+}
+
+document.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  paddleX = e.clientX - rect.left - paddleW/2;
+  paddleX = Math.max(0, Math.min(400, paddleX));
+});
+
+loop();
+</script>
+</body>
+</html>
